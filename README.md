@@ -128,9 +128,7 @@ streamlit run app/app.py
 ---
 
 ## 🌍 Live Demo
-
-*(Add your deployed Streamlit link here)*
-
+https://patient-segmentation-healthcare-clusteringgit-rw6zastlkughmftq.streamlit.app/
 ---
 
 ## 📂 Project Structure
