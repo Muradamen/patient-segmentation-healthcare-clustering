@@ -10,8 +10,32 @@ st.set_page_config(page_title="Patient Segmentation Dashboard", layout="wide")
 # LOAD DATA
 # -------------------------------
 @st.cache_data
-def load_data(file):
-    return pd.read_csv(file)
+import os
+
+@st.cache_data
+def load_data_from_repo():
+    return pd.read_csv("clustered_patients.csv")
+
+# Try loading default file first
+if os.path.exists("clustered_patients.csv"):
+    df = load_data_from_repo()
+    st.success("Loaded default dataset from repository ✅")
+
+    use_upload = st.checkbox("Upload a different dataset")
+
+    if use_upload:
+        uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
+        if uploaded_file:
+            df = pd.read_csv(uploaded_file)
+
+else:
+    st.warning("No default dataset found. Please upload one.")
+    uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
+    
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+    else:
+        st.stop()
 
 st.title("🏥 Patient Segmentation & Prediction")
 
