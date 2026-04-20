@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from sklearn.preprocessing import MinMaxScaler
+import os
 
 st.set_page_config(page_title="Patient Segmentation Dashboard", layout="wide")
 
@@ -10,47 +11,46 @@ st.set_page_config(page_title="Patient Segmentation Dashboard", layout="wide")
 # LOAD DATA
 # -------------------------------
 @st.cache_data
-import os
+def load_data_from_file(file_path):
+    return pd.read_csv(file_path)
 
 @st.cache_data
-def load_data_from_repo():
-    return pd.read_csv("clustered_patients.csv")
+def load_data_from_upload(uploaded_file):
+    return pd.read_csv(uploaded_file)
 
-# Try loading default file first
+
+st.title("🏥 Patient Segmentation & Prediction Dashboard")
+
+df = None
+
+# -------------------------------
+# CHECK LOCAL FILE FIRST
+# -------------------------------
 if os.path.exists("clustered_patients.csv"):
-    df = load_data_from_repo()
-    st.success("Loaded default dataset from repository ✅")
+    df = load_data_from_file("clustered_patients.csv")
+    st.success("Loaded dataset from repository ✅")
 
-    use_upload = st.checkbox("Upload a different dataset")
+    use_upload = st.checkbox("📂 Upload a different dataset")
 
     if use_upload:
         uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
         if uploaded_file:
-            df = pd.read_csv(uploaded_file)
+            df = load_data_from_upload(uploaded_file)
 
 else:
-    st.warning("No default dataset found. Please upload one.")
+    st.warning("No dataset found in repo. Please upload one.")
     uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
-    
+
     if uploaded_file:
-        df = pd.read_csv(uploaded_file)
+        df = load_data_from_upload(uploaded_file)
     else:
         st.stop()
 
-st.title("🏥 Patient Segmentation & Prediction")
-
-uploaded_file = st.file_uploader("📂 Upload Clustered Dataset", type=["csv"])
-
-if uploaded_file is None:
-    st.warning("Please upload your clustered dataset (clustered_patients.csv)")
-    st.stop()
-
-df = load_data(uploaded_file)
-
 # -------------------------------
-# BASIC INFO
+# DATA OVERVIEW
 # -------------------------------
 st.subheader("📊 Dataset Overview")
+
 col1, col2 = st.columns(2)
 
 with col1:
@@ -62,7 +62,7 @@ with col2:
     st.write(df.dtypes)
 
 # -------------------------------
-# CLUSTER LABELS (BUSINESS)
+# CLUSTER LABELS
 # -------------------------------
 cluster_names = {
     1: "High-Cost Chronic Patients",
@@ -98,7 +98,7 @@ fig2 = px.box(
 st.plotly_chart(fig2, use_container_width=True)
 
 # -------------------------------
-# FEATURE EXPLORATION
+# FEATURE ANALYSIS
 # -------------------------------
 st.subheader("🔍 Feature Analysis")
 
@@ -118,7 +118,7 @@ fig3 = px.histogram(
 st.plotly_chart(fig3, use_container_width=True)
 
 # -------------------------------
-# PREDICTION SECTION
+# PREDICTION SYSTEM
 # -------------------------------
 st.sidebar.header("🧠 Predict Patient Segment")
 
@@ -148,6 +148,7 @@ def predict_cluster(new_data, df_ref):
     gower_dist = np.concatenate([num_dist, cat_dist], axis=1).mean(axis=1)
 
     cluster_labels = df_ref['Cluster']
+
     cluster_dist = {
         cluster: gower_dist[cluster_labels == cluster].mean()
         for cluster in np.unique(cluster_labels)
@@ -190,6 +191,7 @@ if submit:
 # DOWNLOAD
 # -------------------------------
 st.subheader("⬇️ Download Results")
+
 st.download_button(
     "Download Dataset",
     data=df.to_csv(index=False),
